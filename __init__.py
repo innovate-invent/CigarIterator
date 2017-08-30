@@ -1,5 +1,17 @@
-import pysam
 import re
+from enum import Enum
+
+class CigarOps(Enum):
+    CMATCH = 0 # M
+    CINS = 1 # I
+    CDEL = 2 # D
+    CREF_SKIP = 3 # N
+    CSOFT_CLIP = 4 # S
+    CHARD_CLIP = 5 # H
+    CPAD = 6 # P
+    CEQUAL = 7 # =
+    CDIFF = 8 # X
+    CBACK = 9 # B
 
 MDOps = r'(\d*)\^?([A-Za-z])'
 
@@ -13,7 +25,7 @@ def appendOrInc(ops: list, op: list):
 
 class CigarIterator(object):
     __slots__ = 'record', 'ops', 'md', 'opsI', 'opPos', 'opStart', 'seqPos', 'refStart', 'refPos', 'mdI'
-    def __init__(self, record: pysam.AlignedSegment):
+    def __init__(self, record: 'AlignedSegment'):
         self.record = record
         self.ops = record.cigartuples or ()  # List of CIGAR operations
         self.md = None  # Reference bases from MD tag
@@ -31,7 +43,7 @@ class CigarIterator(object):
                 mdOffset += int(matchCount or 0)
                 while pos <= mdOffset: # Scan CIGAR for insertions and add to offset as MD does not include insertions in MD coordinate space
                     pos += self.ops[i][1]
-                    if self.ops[i][0] == pysam.CINS:
+                    if self.ops[i][0] == CigarOps.CINS:
                         mdOffset += self.ops[i][1]
                     i += 1
                 self.md.append((refBase, mdOffset))
@@ -108,7 +120,7 @@ class CigarIterator(object):
         if not self.valid: return 0
         count = 0
         if hardOnly:
-            if self.op == pysam.CHARD_CLIP:
+            if self.op == CigarOps.CHARD_CLIP:
                 return self.stepOp()
             else:
                 return 0
@@ -184,15 +196,15 @@ class CigarIterator(object):
 
     @property
     def inRef(self) -> bool: # Returns true if the passed operation has a reference coordinate
-        return self.op in (pysam.CMATCH, pysam.CDEL, pysam.CREF_SKIP, pysam.CEQUAL, pysam.CDIFF)
+        return self.op in (CigarOps.CMATCH, CigarOps.CDEL, CigarOps.CREF_SKIP, CigarOps.CEQUAL, CigarOps.CDIFF)
 
     @property
     def inSeq(self) -> bool: # Returns true if the passed operation has a sequence coordinate
-        return self.op in (pysam.CMATCH, pysam.CINS, pysam.CSOFT_CLIP, pysam.CEQUAL, pysam.CDIFF)
+        return self.op in (CigarOps.CMATCH, CigarOps.CINS, CigarOps.CSOFT_CLIP, CigarOps.CEQUAL, CigarOps.CDIFF)
 
     @property
     def clipped(self):
-        return self.op in (pysam.CHARD_CLIP, pysam.CSOFT_CLIP)
+        return self.op in (CigarOps.CHARD_CLIP, CigarOps.CSOFT_CLIP)
 
     @property
     def refBase(self) -> str:
