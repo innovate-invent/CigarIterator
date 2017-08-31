@@ -1,7 +1,7 @@
 import re
-from enum import Enum
+from enum import IntEnum
 
-class CigarOps(Enum):
+class CigarOps(IntEnum):
     CMATCH = 0 # M
     CINS = 1 # I
     CDEL = 2 # D
