@@ -1,9 +1,10 @@
 from setuptools import setup, find_packages
+from CigarIterator.__version import __versionstr__
 
 with open('README.rst') as readme:
     setup(
         name='CigarIterator',
-        version='1.0.3',
+        version=__versionstr__,
         packages=find_packages(),
         long_description=readme.read(),
         url='https://github.com/innovate-invent/CigarIterator',

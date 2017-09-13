@@ -32,22 +32,25 @@ class CigarIterator(object):
         self.rewind()
 
     def _buildMD(self):
-        if self.record.has_tag("MD"):
-            self.md = []
-            mdStr = self.record.get_tag("MD")
-            i = 0
-            pos = 0
-            mdOffset = self.record.query_alignment_start # Cigar pos will correlate to number of clipped bases
-            for mdOp in re.finditer(MDOps, mdStr):
-                matchCount, refBase = mdOp.group(1, 2)
-                mdOffset += int(matchCount or 0)
-                while pos <= mdOffset: # Scan CIGAR for insertions and add to offset as MD does not include insertions in MD coordinate space
-                    pos += self.ops[i][1]
-                    if self.ops[i][0] == CigarOps.CINS:
-                        mdOffset += self.ops[i][1]
-                    i += 1
-                self.md.append((refBase, mdOffset))
-                mdOffset += 1
+        try:
+            if self.record.has_tag("MD"):
+                self.md = []
+                mdStr = self.record.get_tag("MD")
+                i = 0
+                pos = 0
+                mdOffset = self.record.query_alignment_start # Cigar pos will correlate to number of clipped bases
+                for mdOp in re.finditer(MDOps, mdStr):
+                    matchCount, refBase = mdOp.group(1, 2)
+                    mdOffset += int(matchCount or 0)
+                    while pos <= mdOffset: # Scan CIGAR for insertions and add to offset as MD does not include insertions in MD coordinate space
+                        pos += self.ops[i][1]
+                        if self.ops[i][0] == CigarOps.CINS:
+                            mdOffset += self.ops[i][1]
+                        i += 1
+                    self.md.append((refBase, mdOffset))
+                    mdOffset += 1
+        except BaseException as e:
+            raise RuntimeError("Unhandled exception while parsing MD Tag.") from e
 
     def _getMD(self) -> tuple:
         if self.md == None:
